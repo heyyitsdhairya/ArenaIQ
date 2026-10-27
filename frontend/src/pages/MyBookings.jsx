@@ -20,9 +20,11 @@ export default function MyBookings({ user: currentUser, onProfileUpdated }) {
   async function loadProfileAndBookings() {
     setLoading(true);
     try {
+      const targetUid = currentUser?.id;
+      if (!targetUid) return;
       const [bookingsRes, userRes] = await Promise.all([
-        fetchMyBookings(currentUser?.id || 'player_dhairya'),
-        fetchUserProfile(currentUser?.id || 'player_dhairya')
+        fetchMyBookings(targetUid),
+        fetchUserProfile(targetUid)
       ]);
       setData(bookingsRes);
       if (userRes) {
@@ -53,25 +55,24 @@ export default function MyBookings({ user: currentUser, onProfileUpdated }) {
     }
   }
 
-  const user = profile || {
-    id: "player_dhairya",
-    name: "Dhairya Shah",
-    email: "dhairya.shah@arenaiq.in",
-    phone: "+91 98765 43210",
-    city: "Ahmedabad",
-    area: "Bodakdev / Sindhu Bhavan",
-    skill_tier: "Tournament / Advanced Tier",
-    bio: "Weekend Box Cricket captain & casual futsal midfielder. Always on time and looking for competitive matches under floodlights.",
-    favorite_sports: ["Cricket", "Football", "Pickleball"],
-    playing_positions: {
-      "Cricket": "Top-Order Batter / All-Rounder",
-      "Football": "Central Midfielder",
-      "Pickleball": "Right-Side Doubles"
+  const user = profile || currentUser || {
+    id: currentUser?.id || "player_guest",
+    name: currentUser?.name || "Player",
+    email: currentUser?.email || "",
+    phone: currentUser?.phone || "",
+    city: currentUser?.city || "Ahmedabad",
+    area: currentUser?.area || "Bodakdev",
+    skill_tier: currentUser?.skill_tier || "Tournament / Intermediate Tier",
+    bio: currentUser?.bio || "Active sports enthusiast.",
+    favorite_sports: currentUser?.favorite_sports || ["Cricket", "Football"],
+    playing_positions: currentUser?.playing_positions || {
+      "Cricket": "All-Rounder",
+      "Football": "Midfielder"
     },
-    fairplay_score: 105,
-    reliability_score: 105,
-    badges: ["Verified Team Captain", "Weekend Regular", "Punctual Player", "Zero Late Drops"],
-    total_bookings: 8,
+    fairplay_score: currentUser?.fairplay_score || 100,
+    reliability_score: currentUser?.reliability_score || 100,
+    badges: currentUser?.badges || ["Verified Player", "Punctual Player"],
+    total_bookings: 0,
     cancelled_bookings: 0,
     turnout_rate: "100%"
   };
@@ -135,10 +136,10 @@ export default function MyBookings({ user: currentUser, onProfileUpdated }) {
               {/* Contact and Location details */}
               <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Mail size={14} color="var(--text-dim)" /> {user.email || 'dhairya.shah@arenaiq.in'}
+                  <Mail size={14} color="var(--text-dim)" /> {user.email || 'player@arenaiq.in'}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Phone size={14} color="var(--text-dim)" /> {user.phone || '+91 98765 43210'}
+                  <Phone size={14} color="var(--text-dim)" /> {user.phone || '+91 98000 00000'}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <MapPin size={14} color="var(--text-dim)" /> {user.area}, {user.city}

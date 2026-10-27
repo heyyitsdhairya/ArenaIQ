@@ -13,9 +13,9 @@ export default function FillSquadRadar({ user }) {
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   })() || {
-    id: "player_dhairya",
-    name: "Dhairya Shah",
-    phone: "+91 98765 43210"
+    id: "player_guest",
+    name: "Player",
+    phone: ""
   };
 
   const [squads, setSquads] = useState([]);
@@ -93,9 +93,9 @@ export default function FillSquadRadar({ user }) {
       const res = await joinSquadRequest(
         sq.id,
         {
-          user_id: activeUser.id || "player_dhairya",
-          name: activeUser.name || "Dhairya Shah",
-          phone: activeUser.phone || "+91 98765 43210"
+          user_id: activeUser.id || "player_guest",
+          name: activeUser.name || "Player",
+          phone: activeUser.phone || ""
         },
         currentDynamicPrice
       );
@@ -124,8 +124,9 @@ export default function FillSquadRadar({ user }) {
         time_slot: `${broadcastForm.start_time} - ${broadcastForm.end_time}`,
         start_time: broadcastForm.start_time,
         end_time: broadcastForm.end_time,
-        captain_name: activeUser.name || "Dhairya Shah",
-        captain_phone: activeUser.phone || "+91 98765 43210",
+        captain_name: activeUser.name || "Player Captain",
+        captain_phone: activeUser.phone || "",
+        captain_id: activeUser.id || "player_captain",
         subs_needed: Number(broadcastForm.subs_needed),
         per_person_share: Number(broadcastForm.per_person_share),
         skill_level: broadcastForm.skill_level,
@@ -388,7 +389,7 @@ export default function FillSquadRadar({ user }) {
             const isFull = sq.subs_joined >= sq.subs_needed;
             const remaining = sq.subs_needed - sq.subs_joined;
             const alreadyJoined = sq.players?.some(p =>
-              p.user_id === activeUser.id || p.user_id === "player_dhairya" || p.user_id === "player_kartik"
+              p.user_id === activeUser.id
             );
 
             const hasSurge = urgency.surgeMultiplier > 1.0;

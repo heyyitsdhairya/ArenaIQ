@@ -98,20 +98,40 @@ async def create_booking(req: BookingRequest):
     return booking
 
 @router.get("/my")
-async def get_my_bookings(user_id: str = "player_dhairya"):
-    if user_id == "player_kartik":
-        user_id = "player_dhairya"
+async def get_my_bookings(user_id: str = ""):
+    if not user_id:
+        return {"user": None, "bookings_count": 0, "bookings": []}
+
     all_bookings = list(db_manager.memory_store["bookings"].values())
-    my_bookings = [b for b in all_bookings if b.get("user_id") in (user_id, "player_kartik", "player_dhairya")]
-    user_info = db_manager.memory_store["users"].get(user_id, {
-        "id": user_id,
-        "name": "Dhairya Shah",
-        "reliability_score": 105,
-        "fairplay_score": 105,
-        "badges": ["Verified Team Captain", "Weekend Regular", "Punctual Player"],
-        "total_bookings": len(my_bookings),
-        "cancelled_bookings": 0
-    })
+    if db_manager.is_connected and db_manager.db is not None:
+        try:
+            cursor = db_manager.db["bookings"].find({"user_id": user_id}, {"_id": 0})
+            mongo_bookings = await cursor.to_list(length=100)
+            if mongo_bookings:
+                all_bookings = mongo_bookings
+        except Exception:
+            pass
+
+    my_bookings = [b for b in all_bookings if b.get("user_id") == user_id]
+
+    user_info = db_manager.memory_store.get("users", {}).get(user_id)
+    if not user_info and db_manager.is_connected and db_manager.db is not None:
+        try:
+            user_info = await db_manager.db["users"].find_one({"id": user_id}, {"_id": 0})
+        except Exception:
+            pass
+
+    if not user_info:
+        user_info = {
+            "id": user_id,
+            "name": "Registered Player",
+            "reliability_score": 100,
+            "fairplay_score": 100,
+            "badges": ["Verified Player", "Punctual Player"],
+            "total_bookings": len(my_bookings),
+            "cancelled_bookings": 0
+        }
+
     return {
         "user": user_info,
         "bookings_count": len(my_bookings),

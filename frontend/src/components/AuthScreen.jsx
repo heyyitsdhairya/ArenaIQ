@@ -3,7 +3,7 @@ import {
   Zap, ShieldCheck, Users, Clock, Award, ArrowRight, Lock,
   Mail, Phone, User, CheckCircle2, Building2, FileText, MapPin, Sparkles
 } from 'lucide-react';
-import { loginUser, loginPartner, registerPartner } from '../services/api';
+import { loginUser, registerUser, loginPartner, registerPartner } from '../services/api';
 import playerLogo from '../assets/player_logo.jpg';
 import partnerLogo from '../assets/partner_logo.jpg';
 
@@ -11,12 +11,39 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
   // Top-level portal mode: 'player' or 'partner'
   const [portalMode, setPortalMode] = useState(defaultPortal);
 
+  // Saved device account for 1-click fast login (on THIS specific device only)
+  const [savedAccount, setSavedAccount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('arenaiq_saved_account');
+      return (saved && saved !== 'undefined' && saved !== 'null') ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
   // PLAYER PORTAL STATE
-  const [playerAuthMode, setPlayerAuthMode] = useState('demo'); // 'demo', 'signin', 'signup'
-  const [playerEmailOrPhone, setPlayerEmailOrPhone] = useState('dhairya.shah@arenaiq.in');
-  const [playerPassword, setPlayerPassword] = useState('password123');
-  const [playerName, setPlayerName] = useState('');
-  const [playerCity, setPlayerCity] = useState('Ahmedabad');
+  // If user registered/logged in earlier on THIS device, show fastlogin option.
+  // Otherwise, default to COMPULSORY first-time registration ('register')!
+  const [playerAuthMode, setPlayerAuthMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('arenaiq_saved_account');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        return 'fastlogin';
+      }
+    } catch {}
+    return 'register';
+  });
+
+  // Registration Fields (Compulsory for any new user)
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('password123');
+  const [regCity, setRegCity] = useState('Ahmedabad');
+  const [regArea, setRegArea] = useState('Bodakdev / Sindhu Bhavan');
+  const [regSports, setRegSports] = useState(['Cricket', 'Football']);
+
+  // Sign In Fields (Clean, no developer pre-fills)
+  const [loginEmailOrPhone, setLoginEmailOrPhone] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   // VENUE PARTNER PORTAL STATE
   const [partnerAuthMode, setPartnerAuthMode] = useState('register'); // 'register', 'signin', 'demo'
@@ -31,28 +58,92 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
   const [partnerPassword, setPartnerPassword] = useState('partner123');
 
   // Partner Sign-in fields
-  const [partnerLoginQuery, setPartnerLoginQuery] = useState('rajesh.patel@bodakdevturf.in');
+  const [partnerLoginQuery, setPartnerLoginQuery] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // ----------------------------------------------------
-  // PLAYER AUTHENTICATION
+  // PLAYER COMPULSORY REGISTRATION
   // ----------------------------------------------------
-  async function handlePlayerAuth(e, selectedUser = null) {
+  async function handlePlayerRegister(e) {
+    if (e) e.preventDefault();
+    if (!regName.trim()) {
+      setErrorMsg("Please enter your full name.");
+      return;
+    }
+    if (!regEmail.trim()) {
+      setErrorMsg("Please enter your email address.");
+      return;
+    }
+    if (!regPhone.trim()) {
+      setErrorMsg("Please enter your mobile phone number.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const payload = {
+        name: regName.trim(),
+        email: regEmail.trim().toLowerCase(),
+        phone: regPhone.trim(),
+        password: regPassword || "password123",
+        city: regCity.trim(),
+        area: regArea.trim(),
+        favorite_sports: regSports
+      };
+
+      const res = await registerUser(payload);
+      // Remember on this specific device for subsequent fast 1-click logins
+      localStorage.setItem('arenaiq_saved_account', JSON.stringify(res.user));
+      setSavedAccount(res.user);
+      onLoginSuccess(res.user, 'player');
+    } catch (err) {
+      setErrorMsg(err.message || 'Player registration failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ----------------------------------------------------
+  // PLAYER LOGIN (EXISTING OR FAST 1-CLICK)
+  // ----------------------------------------------------
+  async function handlePlayerLogin(e, fastUser = null) {
     if (e) e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
-    const targetLogin = selectedUser || playerEmailOrPhone;
+    const targetLogin = fastUser ? (fastUser.email || fastUser.id) : loginEmailOrPhone;
+    const targetPassword = fastUser ? "password123" : (loginPassword || "password123");
+
+    if (!targetLogin) {
+      setErrorMsg("Please enter your registered email or phone number.");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await loginUser(targetLogin, playerPassword);
+      const res = await loginUser(targetLogin, targetPassword);
+      // Remember on this specific device
+      localStorage.setItem('arenaiq_saved_account', JSON.stringify(res.user));
+      setSavedAccount(res.user);
       onLoginSuccess(res.user, 'player');
     } catch (err) {
-      setErrorMsg(err.message || 'Player authentication failed');
+      setErrorMsg(err.message || 'Login failed. Please verify credentials or register.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function toggleRegSport(sp) {
+    if (regSports.includes(sp)) {
+      if (regSports.length > 1) {
+        setRegSports(regSports.filter(s => s !== sp));
+      }
+    } else {
+      setRegSports([...regSports, sp]);
     }
   }
 
@@ -374,15 +465,35 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
           )}
 
           {/* =====================================================================
-              MODE A: PLAYER PORTAL LOGIN & SIGNUP
+              MODE A: PLAYER PORTAL COMPULSORY REGISTRATION & FAST LOGIN
           ===================================================================== */}
           {portalMode === 'player' && (
             <div>
               {/* Secondary Sub-Tabs */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '1.4rem' }}>
+                {savedAccount && (
+                  <button
+                    type="button"
+                    onClick={() => setPlayerAuthMode('fastlogin')}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: playerAuthMode === 'fastlogin' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                      border: playerAuthMode === 'fastlogin' ? '1px solid rgba(6, 182, 212, 0.35)' : '1px solid transparent',
+                      color: playerAuthMode === 'fastlogin' ? '#38bdf8' : 'var(--text-muted)'
+                    }}
+                  >
+                    ⚡ Fast 1-Click Login
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  onClick={() => setPlayerAuthMode('demo')}
+                  onClick={() => setPlayerAuthMode('register')}
                   style={{
                     flex: 1,
                     padding: '8px',
@@ -390,13 +501,14 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    background: playerAuthMode === 'demo' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                    border: playerAuthMode === 'demo' ? '1px solid rgba(6, 182, 212, 0.35)' : '1px solid transparent',
-                    color: playerAuthMode === 'demo' ? '#38bdf8' : 'var(--text-muted)'
+                    background: playerAuthMode === 'register' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                    border: playerAuthMode === 'register' ? '1px solid rgba(6, 182, 212, 0.35)' : '1px solid transparent',
+                    color: playerAuthMode === 'register' ? '#38bdf8' : 'var(--text-muted)'
                   }}
                 >
-                  ⚡ Quick Demo Players
+                  📝 {savedAccount ? 'Register New' : 'New Player Registration'}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setPlayerAuthMode('signin')}
@@ -412,114 +524,279 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
                     color: playerAuthMode === 'signin' ? '#38bdf8' : 'var(--text-muted)'
                   }}
                 >
-                  Player Sign In
+                  🔑 Sign In
                 </button>
               </div>
 
-              {playerAuthMode === 'demo' && (
+              {/* OPTION 1: FAST 1-CLICK LOGIN (ONLY ON THIS REMEMBERED DEVICE) */}
+              {playerAuthMode === 'fastlogin' && savedAccount && (
                 <div>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-                    Select a verified player profile to instantly test court booking, bill splitting, and squad radar:
-                  </p>
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(6, 182, 212, 0.08)',
+                    border: '1px solid rgba(6, 182, 212, 0.25)',
+                    marginBottom: '1.2rem',
+                    fontSize: '0.8rem',
+                    color: '#38bdf8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <Sparkles size={16} />
+                    <span>Welcome back! Your verified profile was remembered on this browser device.</span>
+                  </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {/* Demo 1 */}
-                    <div
-                      onClick={() => handlePlayerAuth(null, 'player_dhairya')}
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: '12px',
-                        background: 'rgba(6, 182, 212, 0.08)',
-                        border: '1px solid rgba(6, 182, 212, 0.25)',
-                        cursor: 'pointer',
+                  <div
+                    onClick={() => handlePlayerLogin(null, savedAccount)}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '14px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(6, 182, 212, 0.4)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 8px 24px rgba(6, 182, 212, 0.12)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          color: '#ffffff'
-                        }}>
-                          D
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        fontSize: '1.1rem'
+                      }}>
+                        {savedAccount.name ? savedAccount.name[0].toUpperCase() : 'U'}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 800, color: '#ffffff', fontSize: '1rem' }}>
+                            {savedAccount.name}
+                          </span>
+                          <span className="badge badge-cyan" style={{ fontSize: '0.64rem' }}>
+                            {savedAccount.fairplay_score || 100} Reliability
+                          </span>
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.94rem' }}>
-                            Dhairya Shah <span className="badge badge-cyan" style={{ fontSize: '0.62rem' }}>105 Reliability</span>
-                          </div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>
-                            Verified Team Captain • Ahmedabad (Bodakdev)
-                          </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '3px' }}>
+                          {savedAccount.email} • {savedAccount.city}
                         </div>
                       </div>
-                      <ArrowRight size={16} color="var(--accent-cyan)" />
                     </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: 'var(--accent-cyan)',
+                      fontWeight: 700,
+                      fontSize: '0.84rem'
+                    }}>
+                      Fast Login <ArrowRight size={16} />
+                    </div>
+                  </div>
 
-                    {/* Demo 2 */}
-                    <div
-                      onClick={() => handlePlayerAuth(null, 'player_aman')}
-                      style={{
-                        padding: '12px 14px',
-                        borderRadius: '12px',
-                        background: 'rgba(16, 185, 129, 0.08)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.2s ease'
-                      }}
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '1.2rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPlayerAuthMode('register')}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '9px', fontSize: '0.78rem' }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          color: '#ffffff'
-                        }}>
-                          A
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.94rem' }}>
-                            Aman Varma <span className="badge badge-lime" style={{ fontSize: '0.62rem' }}>102 Reliability</span>
-                          </div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--text-dim)' }}>
-                            Futsal Striker &amp; Singles Badminton • Gandhinagar
-                          </div>
-                        </div>
-                      </div>
-                      <ArrowRight size={16} color="var(--accent-lime)" />
-                    </div>
+                      + Register New Player
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem('arenaiq_saved_account');
+                        setSavedAccount(null);
+                        setPlayerAuthMode('register');
+                      }}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '9px', fontSize: '0.78rem', color: '#fb7185' }}
+                    >
+                      Clear Saved Account
+                    </button>
                   </div>
                 </div>
               )}
 
-              {playerAuthMode === 'signin' && (
-                <form onSubmit={handlePlayerAuth}>
-                  <div style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Player Email or Phone
+              {/* OPTION 2: COMPULSORY PLAYER REGISTRATION (DEFAULT FOR ALL NEW USERS) */}
+              {playerAuthMode === 'register' && (
+                <form onSubmit={handlePlayerRegister}>
+                  <div style={{
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(6, 182, 212, 0.08)',
+                    border: '1px solid rgba(6, 182, 212, 0.2)',
+                    marginBottom: '1rem',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)'
+                  }}>
+                    🛡️ <strong style={{ color: '#ffffff' }}>Compulsory 1-Time Registration:</strong> Create your genuine player profile to access real-time court availability, FairPlay rankings &amp; live squad radar across Ahmedabad &amp; Gandhinagar.
+                  </div>
+
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Full Name *
                     </label>
                     <input
                       type="text"
                       className="input-field"
+                      placeholder="e.g. Priyank Patel"
+                      value={regName}
+                      onChange={e => setRegName(e.target.value)}
                       required
-                      value={playerEmailOrPhone}
-                      onChange={e => setPlayerEmailOrPhone(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        className="input-field"
+                        placeholder="priyank@gmail.com"
+                        value={regEmail}
+                        onChange={e => setRegEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        Mobile Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        className="input-field"
+                        placeholder="+91 98980 11223"
+                        value={regPhone}
+                        onChange={e => setRegPhone(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        City *
+                      </label>
+                      <select
+                        className="input-field"
+                        value={regCity}
+                        onChange={e => setRegCity(e.target.value)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <option value="Ahmedabad">Ahmedabad</option>
+                        <option value="Gandhinagar">Gandhinagar</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        Locality / Area *
+                      </label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Bodakdev, Kudasan..."
+                        value={regArea}
+                        onChange={e => setRegArea(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Create Password *
+                    </label>
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="••••••••"
+                      value={regPassword}
+                      onChange={e => setRegPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Favorite Sports
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {['Cricket', 'Football', 'Badminton', 'Pickleball', 'Tennis'].map(sp => {
+                        const selected = regSports.includes(sp);
+                        return (
+                          <button
+                            key={sp}
+                            type="button"
+                            onClick={() => toggleRegSport(sp)}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              background: selected ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                              border: selected ? '1px solid rgba(6, 182, 212, 0.45)' : '1px solid var(--border-subtle)',
+                              color: selected ? '#38bdf8' : 'var(--text-muted)'
+                            }}
+                          >
+                            {selected ? '✓ ' : '+ '}{sp}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '12px', fontWeight: 700 }}
+                  >
+                    {loading ? 'Registering & Saving in MongoDB...' : 'Register Profile & Enter ArenaIQ'}
+                  </button>
+
+                  <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-dim)', marginTop: '12px', marginBottom: 0 }}>
+                    Already have an account?{' '}
+                    <span
+                      onClick={() => setPlayerAuthMode('signin')}
+                      style={{ color: 'var(--accent-cyan)', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Sign In here
+                    </span>
+                  </p>
+                </form>
+              )}
+
+              {/* OPTION 3: EXISTING PLAYER SIGN IN */}
+              {playerAuthMode === 'signin' && (
+                <form onSubmit={handlePlayerLogin}>
+                  <div style={{ marginBottom: '1.2rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Player Registered Email or Mobile Number
+                    </label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. priyank@gmail.com or 9898011223"
+                      required
+                      value={loginEmailOrPhone}
+                      onChange={e => setLoginEmailOrPhone(e.target.value)}
                     />
                   </div>
 
@@ -530,9 +807,10 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
                     <input
                       type="password"
                       className="input-field"
+                      placeholder="Enter your password"
                       required
-                      value={playerPassword}
-                      onChange={e => setPlayerPassword(e.target.value)}
+                      value={loginPassword}
+                      onChange={e => setLoginPassword(e.target.value)}
                     />
                   </div>
 
@@ -540,10 +818,20 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
                     type="submit"
                     disabled={loading}
                     className="btn btn-primary"
-                    style={{ width: '100%', padding: '12px' }}
+                    style={{ width: '100%', padding: '12px', fontWeight: 700 }}
                   >
-                    {loading ? 'Authenticating...' : 'Sign In as Player'}
+                    {loading ? 'Authenticating with MongoDB...' : 'Sign In as Player'}
                   </button>
+
+                  <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--text-dim)', marginTop: '14px', marginBottom: 0 }}>
+                    New user?{' '}
+                    <span
+                      onClick={() => setPlayerAuthMode('register')}
+                      style={{ color: 'var(--accent-cyan)', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Complete compulsory registration here
+                    </span>
+                  </p>
                 </form>
               )}
             </div>

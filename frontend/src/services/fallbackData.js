@@ -197,8 +197,8 @@ export const FALLBACK_SQUADS = [
     time_slot: "21:00 - 22:00",
     start_time: "21:00",
     end_time: "22:00",
-    captain_name: "Aman Varma",
-    captain_phone: "+91 99090 56789",
+    captain_name: "Aditya Sharma",
+    captain_phone: "+91 99090 12345",
     subs_needed: 3,
     subs_joined: 1,
     base_price: 140.0,
@@ -207,7 +207,7 @@ export const FALLBACK_SQUADS = [
     notes: "5v5 Futsal friendly. Goalkeeper injured ankle! Need a keeper and 1 midfielder. Fresh energy drinks on captain!",
     status: "open",
     players: [
-      { user_id: "p-3", name: "Aman Varma (C)", role: "Captain", reliability_score: 102 },
+      { user_id: "p-3", name: "Aditya Sharma (C)", role: "Captain", reliability_score: 102 },
       { user_id: "p-4", name: "Siddharth Jain", role: "Player", reliability_score: 95 }
     ],
     urgency_level: "high",

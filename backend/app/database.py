@@ -17,39 +17,8 @@ class Database:
         "bookings": {},
         "squad_requests": {},
         "partners": {},
-        "users": {
-            "player_dhairya": {
-                "id": "player_dhairya",
-                "name": "Dhairya Shah",
-                "phone": "+91 98765 43210",
-                "city": "Ahmedabad",
-                "area": "Bodakdev / Sindhu Bhavan",
-                "fairplay_score": 105,
-                "badges": ["Verified Team Captain", "Weekend Regular", "Punctual Player", "Zero Late Drops"],
-                "total_bookings": 8,
-                "cancelled_bookings": 0
-            },
-            "player_aman": {
-                "id": "player_aman",
-                "name": "Aman Varma",
-                "email": "aman.varma@arenaiq.in",
-                "phone": "+91 99090 56789",
-                "city": "Gandhinagar",
-                "area": "Kudasan / PDPU Road",
-                "skill_tier": "Pro / Competitive Tier",
-                "bio": "Futsal striker and weekend badminton player in Gandhinagar. Love fast-paced 5v5 games.",
-                "favorite_sports": ["Football", "Badminton"],
-                "playing_positions": {
-                    "Football": "Striker / Forward",
-                    "Badminton": "Singles Specialist"
-                },
-                "fairplay_score": 102,
-                "badges": ["Consistent Striker", "Punctual Player"],
-                "total_bookings": 5,
-                "cancelled_bookings": 0,
-                "turnout_rate": "100%"
-            }
-        }
+        "users": {},
+        "auth_audit_logs": []
     }
 
 db_manager = Database()

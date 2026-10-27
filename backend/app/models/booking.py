@@ -4,9 +4,9 @@ from datetime import datetime
 import uuid
 
 class BookingRequest(BaseModel):
-    user_id: str = "player_dhairya"
-    user_name: str = "Dhairya Shah"
-    user_phone: str = "+91 98765 43210"
+    user_id: str = "player_guest"
+    user_name: str = "Registered Player"
+    user_phone: str = ""
     venue_id: str
     venue_name: str
     court_id: str

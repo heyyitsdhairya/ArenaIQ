@@ -40,7 +40,7 @@ export default function EditProfileModal({ user, onClose, onProfileUpdated }) {
         playing_positions: user.playing_positions || {}
       };
 
-      const res = await updateUserProfile(user.id || 'player_dhairya', payload);
+      const res = await updateUserProfile(user.id || 'player_user', payload);
       onProfileUpdated(res.user);
       onClose();
     } catch (err) {

@@ -23,10 +23,10 @@ export default function BookingModal({ venue, onClose, onBookingSuccess, user, i
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   })() || {
-    id: "player_dhairya",
-    name: "Dhairya Shah",
-    phone: "+91 98765 43210",
-    email: "dhairya.shah@gmail.com"
+    id: "player_guest",
+    name: "Player",
+    phone: "",
+    email: ""
   };
 
   // Multi-step booking flow navigation state:
@@ -43,8 +43,8 @@ export default function BookingModal({ venue, onClose, onBookingSuccess, user, i
   const [currentTime, setCurrentTime] = useState(getCurrentTime12h());
 
   // Step 2: Player & Add-ons state
-  const [bookerName, setBookerName] = useState(activeUser.name || "Dhairya Shah");
-  const [bookerPhone, setBookerPhone] = useState(activeUser.phone || "+91 98765 43210");
+  const [bookerName, setBookerName] = useState(activeUser.name || "Player");
+  const [bookerPhone, setBookerPhone] = useState(activeUser.phone || "");
   const [matchType, setMatchType] = useState("Friendly Match");
   const [selectedAddons, setSelectedAddons] = useState({
     balls_shuttles: true,
@@ -58,7 +58,7 @@ export default function BookingModal({ venue, onClose, onBookingSuccess, user, i
 
   // Step 3: Payment state
   const [paymentMethod, setPaymentMethod] = useState("upi"); // 'upi' | 'card' | 'wallet'
-  const [upiId, setUpiId] = useState("dhairya@okhdfcbank");
+  const [upiId, setUpiId] = useState("arenaiq@okhdfcbank");
   const [upiApp, setUpiApp] = useState("gpay"); // 'gpay' | 'phonepe' | 'paytm'
   const [processingPayment, setProcessingPayment] = useState(false);
   const [processingStage, setProcessingStage] = useState(1);
@@ -152,9 +152,9 @@ export default function BookingModal({ venue, onClose, onBookingSuccess, user, i
       setProcessingStage(3);
 
       const payload = {
-        user_id: activeUser.id || "player_dhairya",
-        user_name: bookerName || activeUser.name || "Dhairya Shah",
-        user_phone: bookerPhone || activeUser.phone || "+91 98765 43210",
+        user_id: activeUser.id || "player_guest",
+        user_name: bookerName || activeUser.name || "Player",
+        user_phone: bookerPhone || activeUser.phone || "",
         venue_id: venue.id,
         venue_name: venue.name,
         court_id: selectedSlot.court_id,

@@ -18,7 +18,75 @@ export async function fetchHealth() {
   }
 }
 
+// Client-Side Registered User Store (for offline / GitHub Pages persistence)
+export function getClientRegisteredUsers() {
+  try {
+    const saved = localStorage.getItem('arenaiq_client_users');
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveClientRegisteredUser(user) {
+  try {
+    const users = getClientRegisteredUsers();
+    const filtered = users.filter(u => u.id !== user.id && u.email !== user.email);
+    filtered.push(user);
+    localStorage.setItem('arenaiq_client_users', JSON.stringify(filtered));
+  } catch (e) {}
+}
+
+export async function registerUser(userData) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Registration failed");
+    }
+    const data = await res.json();
+    saveClientRegisteredUser(data.user);
+    return data;
+  } catch (err) {
+    if (err.message && !err.message.includes("fetch") && !err.message.includes("Failed to fetch") && !err.message.includes("Network")) {
+      throw err;
+    }
+    // Offline / GitHub Pages fallback registration
+    const userId = `player_${Math.random().toString(36).substring(2, 9)}`;
+    const localUser = {
+      id: userId,
+      name: userData.name.trim(),
+      email: userData.email.trim().toLowerCase(),
+      phone: userData.phone.trim(),
+      city: userData.city || "Ahmedabad",
+      area: userData.area || "Bodakdev",
+      skill_tier: "Tournament / Intermediate Tier",
+      bio: `Registered player from ${userData.city || 'Ahmedabad'}.`,
+      favorite_sports: userData.favorite_sports || ["Cricket", "Football"],
+      playing_positions: { Cricket: "All-Rounder", Football: "Midfielder" },
+      fairplay_score: 100,
+      reliability_score: 100,
+      badges: ["Verified Player", "New Member", "Punctual Player"],
+      total_bookings: 0,
+      cancelled_bookings: 0,
+      registered_at: new Date().toISOString()
+    };
+    saveClientRegisteredUser(localUser);
+    return {
+      status: "registered",
+      message: `Welcome ${localUser.name}! Account created successfully.`,
+      token: `bearer_${userId}_token`,
+      user: localUser
+    };
+  }
+}
+
 export async function loginUser(emailOrPhone, password = "password123") {
+  const query = (emailOrPhone || "").trim().toLowerCase();
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
@@ -26,47 +94,80 @@ export async function loginUser(emailOrPhone, password = "password123") {
       body: JSON.stringify({ email_or_phone: emailOrPhone, password })
     });
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || "Authentication failed");
     }
-    return await res.json();
+    const data = await res.json();
+    saveClientRegisteredUser(data.user);
+    return data;
   } catch (err) {
-    // Offline / GitHub Pages fallback account
-    return {
-      id: "player_dhairya",
-      name: "Dhairya Shah",
-      email: emailOrPhone.includes("@") ? emailOrPhone : "dhairya.shah@arenaiq.in",
-      phone: emailOrPhone.includes("@") ? "+91 98765 43210" : emailOrPhone,
-      city: "Ahmedabad",
-      area: "Bodakdev / Sindhu Bhavan",
-      fairplay_score: 105,
-      reliability_score: 105,
-      badges: ["Verified Team Captain", "Weekend Regular", "Punctual Player", "Zero Late Drops"],
-      total_bookings: 8,
-      cancelled_bookings: 0
-    };
+    // If server responded with a genuine 404/401/400 error, preserve the error message!
+    if (err.message && !err.message.includes("fetch") && !err.message.includes("Failed to fetch") && !err.message.includes("Network")) {
+      throw err;
+    }
+    // Offline / GitHub Pages mode: search in genuinely registered client users
+    const clientUsers = getClientRegisteredUsers();
+    const found = clientUsers.find(u => 
+      u.email?.toLowerCase() === query || 
+      u.phone?.replace(/\s+/g, '') === query.replace(/\s+/g, '') ||
+      u.id === query
+    );
+    if (found) {
+      return { status: "authenticated", user: found, token: `bearer_${found.id}_token` };
+    }
+    throw new Error(`No registered account found for "${emailOrPhone}". Please complete compulsory registration first.`);
   }
 }
 
-export async function fetchUserProfile(userId = "player_dhairya") {
+export async function logoutUser(user) {
+  if (!user) return;
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: user.id,
+        name: user.name || "Player",
+        email: user.email || "",
+        role: "player"
+      })
+    });
+  } catch (e) {
+    // Graceful offline ignore
+  }
+}
+
+export async function fetchAdminUsers() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/admin/users`);
+    if (!res.ok) throw new Error("Failed to fetch users");
+    return await res.json();
+  } catch (e) {
+    const clientUsers = getClientRegisteredUsers();
+    return { database: "local_storage", count: clientUsers.length, users: clientUsers };
+  }
+}
+
+export async function fetchAdminAuditLogs() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/admin/logs`);
+    if (!res.ok) throw new Error("Failed to fetch audit logs");
+    return await res.json();
+  } catch (e) {
+    return { database: "local_storage", count: 0, logs: [] };
+  }
+}
+
+export async function fetchUserProfile(userId) {
+  if (!userId) return null;
   try {
     const res = await fetch(`${API_BASE}/auth/user/${userId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
-    return {
-      id: userId,
-      name: "Dhairya Shah",
-      email: "dhairya.shah@arenaiq.in",
-      phone: "+91 98765 43210",
-      city: "Ahmedabad",
-      area: "Bodakdev / Sindhu Bhavan",
-      fairplay_score: 105,
-      reliability_score: 105,
-      badges: ["Verified Team Captain", "Weekend Regular", "Punctual Player", "Zero Late Drops"],
-      total_bookings: 8,
-      cancelled_bookings: 0
-    };
+    const clientUsers = getClientRegisteredUsers();
+    const found = clientUsers.find(u => u.id === userId);
+    return found || null;
   }
 }
 
@@ -81,9 +182,13 @@ export async function updateUserProfile(userId, profileData) {
       const err = await res.json();
       throw new Error(err.detail || "Failed to update profile");
     }
-    return await res.json();
+    const data = await res.json();
+    if (data.user) saveClientRegisteredUser(data.user);
+    return data;
   } catch (err) {
-    return { ...profileData, id: userId };
+    const updated = { ...profileData, id: userId };
+    saveClientRegisteredUser(updated);
+    return { status: "updated", user: updated };
   }
 }
 
@@ -138,6 +243,23 @@ export async function fetchSlots(venueId, date) {
   }
 }
 
+export function getClientBookings() {
+  try {
+    const saved = localStorage.getItem('arenaiq_client_bookings');
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveClientBooking(booking) {
+  try {
+    const list = getClientBookings();
+    list.unshift(booking);
+    localStorage.setItem('arenaiq_client_bookings', JSON.stringify(list));
+  } catch (e) {}
+}
+
 export async function createBooking(bookingData) {
   try {
     const res = await fetch(`${API_BASE}/bookings`, {
@@ -149,49 +271,39 @@ export async function createBooking(bookingData) {
       const err = await res.json();
       throw new Error(err.detail || "Booking failed");
     }
-    return await res.json();
+    const data = await res.json();
+    saveClientBooking(data);
+    return data;
   } catch (err) {
-    return {
+    const fallbackBooking = {
       ...bookingData,
       booking_id: `BK-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
       status: "confirmed",
       created_at: new Date().toISOString(),
       reliability_awarded: 10
     };
+    saveClientBooking(fallbackBooking);
+    return fallbackBooking;
   }
 }
 
-export async function fetchMyBookings(userId = "player_dhairya") {
+export async function fetchMyBookings(userId = "") {
+  if (!userId) return { user: null, bookings_count: 0, bookings: [] };
   try {
     const res = await fetch(`${API_BASE}/bookings/my?user_id=${userId}`);
     if (!res.ok) throw new Error("Failed to fetch bookings");
     return await res.json();
   } catch (err) {
+    // Offline / GitHub Pages fallback: only return bookings made by this specific user
+    const local = getClientBookings().filter(b => b.user_id === userId);
     return {
       user: {
         id: userId,
-        name: "Dhairya Shah",
-        reliability_score: 105,
-        fairplay_score: 105,
-        badges: ["Verified Team Captain", "Weekend Regular", "Punctual Player"],
-        total_bookings: 8,
+        total_bookings: local.length,
         cancelled_bookings: 0
       },
-      bookings_count: 2,
-      bookings: [
-        {
-          booking_id: "BK-LIVE001",
-          venue_name: "Sindhu Bhavan Sports Complex",
-          court_name: "Maracana Arena (7v7)",
-          sport: "Football",
-          date: new Date().toISOString().split('T')[0],
-          start_time: "20:00",
-          end_time: "21:00",
-          amount_paid: 1800,
-          per_person_cost: 180,
-          status: "confirmed"
-        }
-      ]
+      bookings_count: local.length,
+      bookings: local
     };
   }
 }
@@ -263,7 +375,7 @@ export async function createSquadBroadcast(broadcastData) {
       id: `SQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       ...broadcastData,
       status: "open",
-      players: [{ user_id: "player_dhairya", name: `${broadcastData.captain_name} (Captain)`, role: "Captain", reliability_score: 105 }]
+      players: [{ user_id: broadcastData.captain_id || "player_captain", name: `${broadcastData.captain_name} (Captain)`, role: "Captain", reliability_score: 100 }]
     };
     return { message: "Broadcast created successfully!", squad: newSquad };
   }

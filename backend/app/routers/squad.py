@@ -184,15 +184,16 @@ async def create_squad_request(req: SquadRequestCreate):
     squad.base_price = req.per_person_share
     
     # Initialize roster with captain
+    captain_uid = getattr(req, 'captain_id', None) or f"player_{abs(hash(req.captain_name)) % 100000}"
     squad.players = [
         SquadPlayer(
-            user_id="player_dhairya",
+            user_id=captain_uid,
             name=f"{req.captain_name} (Captain)",
             phone=req.captain_phone,
             role="Captain",
-            reliability_score=105,
-            fairplay_score=105,
-            karma_score=105
+            reliability_score=100,
+            fairplay_score=100,
+            karma_score=100
         )
     ]
     
@@ -208,7 +209,7 @@ async def create_squad_request(req: SquadRequestCreate):
     # Emit SUB_REQUEST event to Kafka
     kafka_producer.emit_event(ArenaEvent(
         event_type="SUB_REQUEST",
-        user_id="player_dhairya",
+        user_id=captain_uid,
         venue_id=squad.venue_id,
         venue_name=squad.venue_name,
         sport=squad.sport,
@@ -224,15 +225,11 @@ async def create_squad_request(req: SquadRequestCreate):
 @router.post("/{squad_id}/join")
 async def join_squad(
     squad_id: str,
-    user_id: str = "player_dhairya",
-    name: str = "Dhairya Shah",
-    phone: str = "+91 98765 43210",
+    user_id: str = "player_guest",
+    name: str = "Player",
+    phone: str = "",
     agreed_price: Optional[float] = None
 ):
-    if user_id == "player_kartik":
-        user_id = "player_dhairya"
-        name = "Dhairya Shah"
-        
     squad = db_manager.memory_store["squad_requests"].get(squad_id)
     if not squad:
         raise HTTPException(status_code=404, detail="Squad request not found")
@@ -241,14 +238,14 @@ async def join_squad(
         raise HTTPException(status_code=400, detail="This squad is already fully packed!")
         
     # Check if user already joined
-    if any(p.get("user_id") in (user_id, "player_kartik", "player_dhairya") for p in squad.get("players", [])):
+    if any(p.get("user_id") == user_id for p in squad.get("players", [])):
         raise HTTPException(status_code=400, detail="You are already in this squad roster!")
 
     now = datetime.now()
     urgency_meta = _calculate_squad_urgency(squad, now)
     final_price = agreed_price if agreed_price else urgency_meta["dynamic_price"]
 
-    user_fairplay = db_manager.memory_store["users"].get(user_id, {}).get("fairplay_score", 105)
+    user_fairplay = db_manager.memory_store.get("users", {}).get(user_id, {}).get("fairplay_score", 100)
     
     new_player = {
         "user_id": user_id,

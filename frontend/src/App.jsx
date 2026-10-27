@@ -5,7 +5,8 @@ import BookingPortal from './pages/BookingPortal';
 import FillSquadRadar from './components/FillSquadRadar';
 import MyBookings from './pages/MyBookings';
 import PartnerHub from './pages/PartnerHub';
-import { fetchHealth, fetchRealtimeMetrics } from './services/api';
+import AdminAuditModal from './components/AdminAuditModal';
+import { fetchHealth, fetchRealtimeMetrics, logoutUser } from './services/api';
 
 export default function App() {
   // Portal Mode: 'player' or 'partner'
@@ -13,7 +14,7 @@ export default function App() {
     return localStorage.getItem('arenaiq_portal') || 'player';
   });
 
-  // Player User Profile
+  // Player User Profile - strictly null by default so ANY new visitor is forced to register/login!
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('arenaiq_user');
@@ -23,18 +24,7 @@ export default function App() {
     } catch (e) {
       console.warn("Failed to parse user from localStorage", e);
     }
-    return {
-      id: "player_dhairya",
-      name: "Dhairya Shah",
-      email: "dhairya.shah@arenaiq.in",
-      phone: "+91 98765 43210",
-      city: "Ahmedabad",
-      area: "Bodakdev / Sindhu Bhavan",
-      fairplay_score: 105,
-      badges: ["Verified Team Captain", "Weekend Regular", "Punctual Player", "Zero Late Drops"],
-      total_bookings: 8,
-      cancelled_bookings: 0
-    };
+    return null;
   });
 
   // Venue Partner Profile
@@ -54,6 +44,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('venues');
   const [health, setHealth] = useState(null);
   const [realtime, setRealtime] = useState(null);
+  const [showAdminAudit, setShowAdminAudit] = useState(false);
 
   // Global portal switch listener
   useEffect(() => {
@@ -100,12 +91,18 @@ export default function App() {
     }
   }
 
-  function handlePlayerLogout() {
+  async function handlePlayerLogout() {
+    if (currentUser) {
+      await logoutUser(currentUser).catch(() => {});
+    }
     setCurrentUser(null);
     localStorage.removeItem('arenaiq_user');
   }
 
-  function handlePartnerLogout() {
+  async function handlePartnerLogout() {
+    if (currentPartner) {
+      await logoutUser({ id: currentPartner.id, name: currentPartner.partner_name, email: currentPartner.email, role: 'partner' }).catch(() => {});
+    }
     setCurrentPartner(null);
     localStorage.removeItem('arenaiq_partner');
   }
@@ -127,14 +124,17 @@ export default function App() {
     }
 
     return (
-      <PartnerHub
-        partner={currentPartner}
-        onLogout={handlePartnerLogout}
-        onSwitchToPlayerPortal={() => {
-          setPortalMode('player');
-          localStorage.setItem('arenaiq_portal', 'player');
-        }}
-      />
+      <>
+        <PartnerHub
+          partner={currentPartner}
+          onLogout={handlePartnerLogout}
+          onSwitchToPlayerPortal={() => {
+            setPortalMode('player');
+            localStorage.setItem('arenaiq_portal', 'player');
+          }}
+        />
+        <AdminAuditModal isOpen={showAdminAudit} onClose={() => setShowAdminAudit(false)} />
+      </>
     );
   }
 
@@ -157,13 +157,14 @@ export default function App() {
     <div className="app-wrapper">
       <div className="bg-glow-mesh" />
 
-      {/* Player Navigation Header (Zero Confidential Partner Leaks) */}
+      {/* Player Navigation Header with MongoDB Admin Audit Console Trigger */}
       <Navbar
         activeTab={activeTab === 'analytics' ? 'venues' : activeTab}
         setActiveTab={setActiveTab}
         user={currentUser}
         onLogout={handlePlayerLogout}
         realtime={realtime}
+        onOpenAdminAudit={() => setShowAdminAudit(true)}
       />
 
       {/* Main Content View Switcher */}
@@ -185,7 +186,10 @@ export default function App() {
         )}
       </main>
 
-      {/* Player Footer with discreet Arena Partner Gateway */}
+      {/* Admin Audit Console Modal */}
+      <AdminAuditModal isOpen={showAdminAudit} onClose={() => setShowAdminAudit(false)} />
+
+      {/* Player Footer with discreet Arena Partner Gateway & Admin Logs */}
       <footer style={{
         borderTop: '1px solid var(--border-subtle)',
         background: 'rgba(7, 10, 18, 0.95)',
@@ -214,6 +218,20 @@ export default function App() {
             <span onClick={() => setActiveTab('venues')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Browse Arenas</span>
             <span onClick={() => setActiveTab('squad')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Squad Radar</span>
             <span onClick={() => setActiveTab('bookings')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>My Passes</span>
+            <span
+              onClick={() => setShowAdminAudit(true)}
+              style={{
+                color: 'var(--accent-cyan)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                background: 'rgba(6, 182, 212, 0.1)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1px solid rgba(6, 182, 212, 0.3)'
+              }}
+            >
+              🛡️ MongoDB Admin Audit
+            </span>
             <span
               onClick={() => {
                 setPortalMode('partner');
