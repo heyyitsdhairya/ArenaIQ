@@ -98,7 +98,7 @@ Open **http://localhost:5173** in your browser!
 ## 5. Live Presentation Demonstration Script for Evaluators
 
 1. **The Customer Booking Experience (2 mins):**
-   - Open **http://localhost:5173** in browse mode.
+   - Open **https://heyyitsdhairya.github.io/ArenaIQ/** in browse mode.
    - Pick **Apex Turf & Sports Arena**, choose an afternoon slot, and demonstrate the **Split-the-Bill slider** (e.g. 10 players = ₹65/each).
    - Check the **"Broadcast to Fill-My-Squad Radar"** box and click **Confirm Simulated Booking**.
 2. **The Speed Layer in Action (2 mins):**
