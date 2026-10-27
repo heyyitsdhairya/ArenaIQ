@@ -1,5 +1,6 @@
 # ArenaIQ: A Big Data Analytics Platform for Sports Venue Booking and Demand Intelligence
 
+> **Website is live at:** https://heyyitsdhairya.github.io/ArenaIQ/
 > **Architecture Pattern:** Decoupled Lambda Architecture (Speed Layer + Batch Layer)  
 > **Core Technologies:** MongoDB 6.0, Apache Kafka 7.5, Apache Hadoop (HDFS & MapReduce), FastAPI, React (Vite)
 
