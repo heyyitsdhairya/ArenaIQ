@@ -1,0 +1,85 @@
+# ==============================================================================
+# Git Ignore Configuration for ArenaIQ Big Data Platform
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Node.js & Frontend Artifacts
+# ------------------------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+frontend/dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# ------------------------------------------------------------------------------
+# Python & Backend Artifacts
+# ------------------------------------------------------------------------------
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ------------------------------------------------------------------------------
+# Docker Volume Mounts & Runtime Locks
+# ------------------------------------------------------------------------------
+.docker/
+docker-data/
+
+# ------------------------------------------------------------------------------
+# IDEs, Code Editors & OS Files
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# Logs & Scratchpad
+# ------------------------------------------------------------------------------
+*.log
+logs/

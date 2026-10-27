@@ -1,0 +1,146 @@
+[
+  {
+    "hour": "06:00",
+    "total_events": 45,
+    "total_bookings": 8,
+    "avg_price": 912.0,
+    "occupancy_pct": 56,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "07:00",
+    "total_events": 43,
+    "total_bookings": 10,
+    "avg_price": 785.0,
+    "occupancy_pct": 74,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "08:00",
+    "total_events": 42,
+    "total_bookings": 7,
+    "avg_price": 986.0,
+    "occupancy_pct": 53,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "09:00",
+    "total_events": 39,
+    "total_bookings": 10,
+    "avg_price": 990.0,
+    "occupancy_pct": 82,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "10:00",
+    "total_events": 63,
+    "total_bookings": 20,
+    "avg_price": 1005.0,
+    "occupancy_pct": 100,
+    "demand": "Super Peak"
+  },
+  {
+    "hour": "11:00",
+    "total_events": 53,
+    "total_bookings": 9,
+    "avg_price": 894.0,
+    "occupancy_pct": 54,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "12:00",
+    "total_events": 50,
+    "total_bookings": 12,
+    "avg_price": 950.0,
+    "occupancy_pct": 76,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "13:00",
+    "total_events": 268,
+    "total_bookings": 42,
+    "avg_price": 1033.0,
+    "occupancy_pct": 50,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "14:00",
+    "total_events": 41,
+    "total_bookings": 8,
+    "avg_price": 988.0,
+    "occupancy_pct": 62,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "15:00",
+    "total_events": 44,
+    "total_bookings": 8,
+    "avg_price": 931.0,
+    "occupancy_pct": 58,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "16:00",
+    "total_events": 45,
+    "total_bookings": 8,
+    "avg_price": 1225.0,
+    "occupancy_pct": 56,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "17:00",
+    "total_events": 48,
+    "total_bookings": 15,
+    "avg_price": 990.0,
+    "occupancy_pct": 100,
+    "demand": "Super Peak"
+  },
+  {
+    "hour": "18:00",
+    "total_events": 45,
+    "total_bookings": 7,
+    "avg_price": 1114.0,
+    "occupancy_pct": 49,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "19:00",
+    "total_events": 43,
+    "total_bookings": 11,
+    "avg_price": 1005.0,
+    "occupancy_pct": 81,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "20:00",
+    "total_events": 53,
+    "total_bookings": 14,
+    "avg_price": 929.0,
+    "occupancy_pct": 84,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "21:00",
+    "total_events": 42,
+    "total_bookings": 11,
+    "avg_price": 959.0,
+    "occupancy_pct": 83,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "22:00",
+    "total_events": 51,
+    "total_bookings": 9,
+    "avg_price": 1039.0,
+    "occupancy_pct": 56,
+    "demand": "Moderate"
+  },
+  {
+    "hour": "23:00",
+    "total_events": 45,
+    "total_bookings": 7,
+    "avg_price": 971.0,
+    "occupancy_pct": 49,
+    "demand": "Moderate"
+  }
+]
