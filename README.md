@@ -1,6 +1,5 @@
 # ArenaIQ: A Big Data Analytics Platform for Sports Venue Booking and Demand Intelligence
 
-> **Academic Coursework:** Semester 7 Big Data Analytics (BDA)  
 > **Architecture Pattern:** Decoupled Lambda Architecture (Speed Layer + Batch Layer)  
 > **Core Technologies:** MongoDB 6.0, Apache Kafka 7.5, Apache Hadoop (HDFS & MapReduce), FastAPI, React (Vite)
 
