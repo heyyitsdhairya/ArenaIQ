@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Zap, Users, CalendarCheck, BarChart3, Award, LogOut, ChevronDown, MapPin, Shield, Sparkles, Building2, UserCheck } from 'lucide-react';
 import playerLogo from '../assets/player_logo.jpg';
 
-export default function Navbar({ activeTab, setActiveTab, user, onLogout, realtime, roleMode, setRoleMode, onOpenAdminAudit }) {
+export default function Navbar({ activeTab, setActiveTab, user, onLogout, realtime, roleMode, setRoleMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const fairplay = user?.reliability_score || user?.fairplay_score || 100;
 
@@ -172,31 +172,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout, realti
 
         {/* Right Dock: Role Switcher & User Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Admin MongoDB Audit Console Trigger */}
-          {onOpenAdminAudit && (
-            <button
-              onClick={onOpenAdminAudit}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '9999px',
-                background: 'rgba(6, 182, 212, 0.1)',
-                border: '1px solid rgba(6, 182, 212, 0.35)',
-                color: '#38bdf8',
-                cursor: 'pointer',
-                fontSize: '0.76rem',
-                fontWeight: 600,
-                transition: 'all 0.2s ease'
-              }}
-              title="Open Admin Security & MongoDB Audit Console"
-            >
-              <Shield size={13} color="var(--accent-cyan)" />
-              <span>MongoDB Audit</span>
-            </button>
-          )}
-
           {/* Partner Portal Entry Link */}
           <button
             onClick={() => {
@@ -299,17 +274,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout, realti
                 >
                   <CalendarCheck size={15} color="var(--accent-cyan)" /> Match Passes &amp; QR Tickets
                 </div>
-
-                {onOpenAdminAudit && (
-                  <div 
-                    onClick={() => { onOpenAdminAudit(); setDropdownOpen(false); }}
-                    style={{ padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(6, 182, 212, 0.12)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <Shield size={15} color="var(--accent-cyan)" /> MongoDB Admin &amp; Audit Logs
-                  </div>
-                )}
 
                 <div 
                   onClick={() => { 

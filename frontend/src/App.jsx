@@ -5,7 +5,6 @@ import BookingPortal from './pages/BookingPortal';
 import FillSquadRadar from './components/FillSquadRadar';
 import MyBookings from './pages/MyBookings';
 import PartnerHub from './pages/PartnerHub';
-import AdminAuditModal from './components/AdminAuditModal';
 import { fetchHealth, fetchRealtimeMetrics, logoutUser } from './services/api';
 
 export default function App() {
@@ -19,7 +18,19 @@ export default function App() {
     try {
       const saved = localStorage.getItem('arenaiq_user');
       if (saved && saved !== 'undefined' && saved !== 'null') {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Cleanse any legacy mock or test sessions
+        if (
+          parsed?.id === 'player_dhairya' ||
+          parsed?.name === 'Dhairya Shah' ||
+          parsed?.id === 'player_aman' ||
+          parsed?.name === 'Aman Varma'
+        ) {
+          localStorage.removeItem('arenaiq_user');
+          localStorage.removeItem('arenaiq_saved_account');
+          return null;
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn("Failed to parse user from localStorage", e);
@@ -44,7 +55,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('venues');
   const [health, setHealth] = useState(null);
   const [realtime, setRealtime] = useState(null);
-  const [showAdminAudit, setShowAdminAudit] = useState(false);
 
   // Global portal switch listener
   useEffect(() => {
@@ -124,17 +134,14 @@ export default function App() {
     }
 
     return (
-      <>
-        <PartnerHub
-          partner={currentPartner}
-          onLogout={handlePartnerLogout}
-          onSwitchToPlayerPortal={() => {
-            setPortalMode('player');
-            localStorage.setItem('arenaiq_portal', 'player');
-          }}
-        />
-        <AdminAuditModal isOpen={showAdminAudit} onClose={() => setShowAdminAudit(false)} />
-      </>
+      <PartnerHub
+        partner={currentPartner}
+        onLogout={handlePartnerLogout}
+        onSwitchToPlayerPortal={() => {
+          setPortalMode('player');
+          localStorage.setItem('arenaiq_portal', 'player');
+        }}
+      />
     );
   }
 
@@ -157,14 +164,13 @@ export default function App() {
     <div className="app-wrapper">
       <div className="bg-glow-mesh" />
 
-      {/* Player Navigation Header with MongoDB Admin Audit Console Trigger */}
+      {/* Player Navigation Header */}
       <Navbar
         activeTab={activeTab === 'analytics' ? 'venues' : activeTab}
         setActiveTab={setActiveTab}
         user={currentUser}
         onLogout={handlePlayerLogout}
         realtime={realtime}
-        onOpenAdminAudit={() => setShowAdminAudit(true)}
       />
 
       {/* Main Content View Switcher */}
@@ -186,10 +192,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Admin Audit Console Modal */}
-      <AdminAuditModal isOpen={showAdminAudit} onClose={() => setShowAdminAudit(false)} />
-
-      {/* Player Footer with discreet Arena Partner Gateway & Admin Logs */}
+      {/* Player Footer with discreet Arena Partner Gateway */}
       <footer style={{
         borderTop: '1px solid var(--border-subtle)',
         background: 'rgba(7, 10, 18, 0.95)',
@@ -218,20 +221,6 @@ export default function App() {
             <span onClick={() => setActiveTab('venues')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Browse Arenas</span>
             <span onClick={() => setActiveTab('squad')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Squad Radar</span>
             <span onClick={() => setActiveTab('bookings')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>My Passes</span>
-            <span
-              onClick={() => setShowAdminAudit(true)}
-              style={{
-                color: 'var(--accent-cyan)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: 'rgba(6, 182, 212, 0.1)',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                border: '1px solid rgba(6, 182, 212, 0.3)'
-              }}
-            >
-              🛡️ MongoDB Admin Audit
-            </span>
             <span
               onClick={() => {
                 setPortalMode('partner');
