@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Zap, Users, CalendarCheck, BarChart3, Award, LogOut, ChevronDown, MapPin, Shield, Sparkles, Building2, UserCheck } from 'lucide-react';
+import playerLogo from '../assets/player_logo.jpg';
 
 export default function Navbar({ activeTab, setActiveTab, user, onLogout, realtime, roleMode, setRoleMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout, realti
             style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
           >
             <img 
-              src="/player_logo.jpg" 
+              src={playerLogo} 
               alt="ArenaIQ Player Logo" 
               style={{
                 width: '42px',

@@ -4,6 +4,8 @@ import {
   Mail, Phone, User, CheckCircle2, Building2, FileText, MapPin, Sparkles
 } from 'lucide-react';
 import { loginUser, loginPartner, registerPartner } from '../services/api';
+import playerLogo from '../assets/player_logo.jpg';
+import partnerLogo from '../assets/partner_logo.jpg';
 
 export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' }) {
   // Top-level portal mode: 'player' or 'partner'
@@ -145,7 +147,7 @@ export default function AuthScreen({ onLoginSuccess, defaultPortal = 'player' })
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem' }}>
             <img
-              src={portalMode === 'player' ? '/player_logo.jpg' : '/partner_logo.jpg'}
+              src={portalMode === 'player' ? playerLogo : partnerLogo}
               alt={portalMode === 'player' ? 'ArenaIQ Player Logo' : 'ArenaIQ Partner Logo'}
               style={{
                 width: '52px',

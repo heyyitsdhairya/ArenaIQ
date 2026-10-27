@@ -15,6 +15,7 @@ import MapReduceViewer from '../components/MapReduceViewer';
 import PipelineHealthBar from '../components/PipelineHealthBar';
 import ArchitectureDiagram from '../components/ArchitectureDiagram';
 import FacultyDemoPanel from '../components/FacultyDemoPanel';
+import partnerLogo from '../assets/partner_logo.jpg';
 
 const PRESET_TURF_IMAGES = [
   { label: "Night Floodlit Turf (Cricket/Football)", url: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&auto=format&fit=crop&q=60" },
@@ -384,7 +385,7 @@ export default function PartnerHub({ partner, onLogout, onSwitchToPlayerPortal }
           {/* Partner Brand with Generated Partner Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img
-              src="/partner_logo.jpg"
+              src={partnerLogo}
               alt="ArenaIQ Partner Hub Logo"
               style={{
                 width: '46px',
@@ -588,7 +589,7 @@ export default function PartnerHub({ partner, onLogout, onSwitchToPlayerPortal }
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img
-              src="/partner_logo.jpg"
+              src={partnerLogo}
               alt="Partner Badge"
               style={{
                 width: '42px',
@@ -1355,7 +1356,7 @@ export default function PartnerHub({ partner, onLogout, onSwitchToPlayerPortal }
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
                 <img
-                  src="/partner_logo.jpg"
+                  src={partnerLogo}
                   alt="Verified Partner"
                   style={{
                     width: '60px',
